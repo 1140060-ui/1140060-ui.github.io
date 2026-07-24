@@ -74,21 +74,10 @@
     #testBtn:hover {
       background: #1e7e34;
     }
-    .status-msg {
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 4px;
-      display: none;
-      font-size: 0.9rem;
-      text-align: center;
-    }
-    .status-msg.success {
-      background-color: #1e4620;
-      color: #75b798;
-    }
-    .status-msg.error {
-      background-color: #491217;
-      color: #ea868f;
+    .note {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -97,8 +86,15 @@
   <div class="form-container">
     <h2>聯絡我們</h2>
     
-    <!-- 一般聯絡表單 -->
-    <form id="contactForm">
+    <!-- 改用原生 HTML 表單直接 POST 到 Web3Forms (100% 避開 CORS 限制) -->
+    <form action="https://api.web3forms.com/submit" method="POST">
+      
+      <!-- Web3Forms 必要的 Access Key -->
+      <input type="hidden" name="access_key" value="81b74347-9220-48a3-81da-28620c7ef4d6">
+
+      <!-- 送出成功後跳轉回原網頁（可自訂） -->
+      <input type="hidden" name="redirect" value="https://1140060-ui.github.io">
+
       <div class="form-group">
         <label for="name">姓名</label>
         <input type="text" id="name" name="name" required placeholder="請輸入姓名">
@@ -114,11 +110,10 @@
         <textarea id="message" name="message" rows="4" required placeholder="請輸入您的訊息..."></textarea>
       </div>
 
-      <button type="submit" id="submitBtn">確認送出</button>
-      <div id="statusMsg" class="status-msg"></div>
+      <button type="submit">確認送出</button>
     </form>
 
-    <!-- JS 測試區塊 -->
+    <!-- JS 測試區塊（保留給後台自動測試） -->
     <div class="test-panel">
       <label for="count">批量測試發送次數 (1~5 次)</label>
       <input type="number" id="count" value="1" min="1" max="5">
@@ -126,60 +121,15 @@
       <button type="button" id="testBtn" onclick="sendTest()">
         開始自動測試
       </button>
+      <p class="note">※ 自動測試若受學校防火牆或外掛影響，請優先使用上方主表單送出。</p>
     </div>
   </div>
 
 <script>
-// 綁定您的專屬 Key 與信箱
 const ACCESS_KEY = "81b74347-9220-48a3-81da-28620c7ef4d6"; 
 const TEST_EMAIL = "1140060@gm.yhh.tn.edu.tw";
 
-// 1. 處理手動填寫表單送出（改用 FormData 格式，防範 CORS 攔截）
-document.getElementById("contactForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-
-  const submitBtn = document.getElementById("submitBtn");
-  const statusMsg = document.getElementById("statusMsg");
-  
-  submitBtn.disabled = true;
-  submitBtn.innerText = "傳送中...";
-  statusMsg.style.display = "none";
-
-  // 使用 FormData 包裝資料
-  const formData = new FormData();
-  formData.append("access_key", ACCESS_KEY);
-  formData.append("name", document.getElementById("name").value);
-  formData.append("email", document.getElementById("email").value);
-  formData.append("message", document.getElementById("message").value);
-
-  try {
-    const response = await fetch("https://api.web3forms.com/submit", {
-      method: "POST",
-      body: formData
-    });
-
-    const result = await response.json();
-
-    if (response.ok && result.success) {
-      statusMsg.className = "status-msg success";
-      statusMsg.innerText = "🎉 訊息發送成功！我們將盡快回覆您。";
-      document.getElementById("contactForm").reset();
-    } else {
-      statusMsg.className = "status-msg error";
-      statusMsg.innerText = "❌ 發送失敗：" + (result.message || "伺服器拒絕發送");
-    }
-  } catch (err) {
-    statusMsg.className = "status-msg error";
-    statusMsg.innerText = "⚠️ 網路連線或 CORS 錯誤，請檢查廣告攔截器是否開啟。";
-    console.error("發送出錯:", err);
-  } finally {
-    statusMsg.style.display = "block";
-    submitBtn.disabled = false;
-    submitBtn.innerText = "確認送出";
-  }
-});
-
-// 2. 批量自動測試功能（使用 FormData 格式）
+// 批量自動測試功能
 async function sendTest() {
   const countInput = document.getElementById("count");
   const testBtn = document.getElementById("testBtn");
